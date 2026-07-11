@@ -16,5 +16,5 @@ def register_routes(app):
     app.register_blueprint(ai_bp, url_prefix='/api/v1/ai')
 
     # Phase 5: 统计
-    # from routes.stats import stats_bp
-    # app.register_blueprint(stats_bp, url_prefix='/api/v1/stats')
+    from routes.statistics import stats_bp
+    app.register_blueprint(stats_bp, url_prefix='/api/v1/statistics')
