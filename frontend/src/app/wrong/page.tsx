@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
+import Icon from '@/components/Icon';
 import apiClient from '@/lib/axios';
 
 interface WrongWordItem {
@@ -76,7 +77,9 @@ export default function WrongWordsPage() {
       <Navbar />
 
       <main className="page-container">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">📕 错词本</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-2">
+          <Icon name="wrong" size={28} /> 错词本
+        </h1>
         <p className="text-gray-500 mb-8">
           共 {items.length} 个需要复习的单词
         </p>
@@ -90,7 +93,7 @@ export default function WrongWordsPage() {
 
         {items.length === 0 && !error ? (
           <div className="card text-center py-12">
-            <p className="text-4xl mb-4">🎉</p>
+            <Icon name="trophy" size={48} className="text-yellow-500 mx-auto mb-4" />
             <p className="text-gray-500 text-lg">错词本为空</p>
             <p className="text-gray-400 text-sm mt-1">继续加油！</p>
           </div>

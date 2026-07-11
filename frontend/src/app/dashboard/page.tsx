@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
+import Icon from '@/components/Icon';
 import apiClient from '@/lib/axios';
 import { getUser } from '@/lib/auth';
 import {
@@ -36,22 +37,23 @@ export default function DashboardPage() {
     } catch { /* ignore */ }
   };
 
-  // 格式化图表日期标签
   const chartData = (stats?.week_data || []).map((d) => ({
     ...d,
-    label: d.date.slice(5), // MM-DD
+    label: d.date.slice(5),
   }));
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="page-container">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">📊 学习仪表盘</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-2">
+          <Icon name="chart" size={28} />
+          学习仪表盘
+        </h1>
         <p className="text-gray-500 mb-8">
-          {username ? `👋 你好，${username}！` : '欢迎回来'}
+          {username ? `你好，${username}！` : '欢迎回来'}
         </p>
 
-        {/* 统计卡片 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="card text-center bg-blue-50">
             <p className="text-3xl font-bold text-blue-700">{stats?.today_count ?? '--'}</p>
@@ -71,9 +73,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 7天学习趋势图 */}
         <div className="card mb-6">
-          <h2 className="text-lg font-semibold mb-4">📈 最近7天学习趋势</h2>
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Icon name="chart" size={20} />
+            最近7天学习趋势
+          </h2>
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={chartData}>
@@ -91,19 +95,18 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* 快捷入口 */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <a href="/learn" className="card hover:shadow-md transition-shadow text-center">
-            <p className="text-2xl mb-1">📚</p>
-            <p className="font-medium text-gray-700">开始学习</p>
+          <a href="/learn" className="card hover:shadow-md transition-shadow text-center flex flex-col items-center gap-1">
+            <Icon name="book" size={28} className="text-blue-600" />
+            <span className="font-medium text-gray-700">开始学习</span>
           </a>
-          <a href="/wrong" className="card hover:shadow-md transition-shadow text-center">
-            <p className="text-2xl mb-1">📕</p>
-            <p className="font-medium text-gray-700">错词本 ({stats?.forgot_words ?? 0})</p>
+          <a href="/wrong" className="card hover:shadow-md transition-shadow text-center flex flex-col items-center gap-1">
+            <Icon name="wrong" size={28} className="text-red-500" />
+            <span className="font-medium text-gray-700">错词本 ({stats?.forgot_words ?? 0})</span>
           </a>
-          <a href="/ai" className="card hover:shadow-md transition-shadow text-center">
-            <p className="text-2xl mb-1">🤖</p>
-            <p className="font-medium text-gray-700">AI助手</p>
+          <a href="/ai" className="card hover:shadow-md transition-shadow text-center flex flex-col items-center gap-1">
+            <Icon name="robot" size={28} className="text-purple-600" />
+            <span className="font-medium text-gray-700">AI助手</span>
           </a>
         </div>
       </main>

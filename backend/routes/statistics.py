@@ -4,8 +4,6 @@ from flask import Blueprint, jsonify, g
 from utils.decorators import login_required
 from models.study_record import StudyRecord
 from models.wrong_word import WrongWord
-from models.word import Word
-from models.user import User
 from extensions import db
 
 stats_bp = Blueprint('statistics', __name__)

@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Icon from '@/components/Icon';
 import apiClient from '@/lib/axios';
 import { setToken, setUser, isAuthenticated } from '@/lib/auth';
 
@@ -57,7 +58,9 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="card w-full max-w-md">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">📚 AI单词助手</h1>
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
+            <Icon name="book" size={24} /> AI单词助手
+          </h1>
           <p className="text-gray-500 mt-1">登录你的账号</p>
         </div>
 

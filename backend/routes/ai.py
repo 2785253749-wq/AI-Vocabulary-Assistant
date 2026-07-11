@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify, g
 from utils.decorators import login_required
 from services.ai_service import AIService
-from services.word_service import StudyService, WrongWordService
 
 ai_bp = Blueprint('ai', __name__)
 

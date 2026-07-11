@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
+import Icon from '@/components/Icon';
 import apiClient from '@/lib/axios';
 import { getUser } from '@/lib/auth';
 
@@ -42,7 +43,9 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="page-container">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">👤 个人中心</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-2">
+          <Icon name="user" size={28} /> 个人中心
+        </h1>
         <p className="text-gray-500 mb-8">查看你的学习情况</p>
 
         {/* 用户信息 */}
@@ -74,7 +77,7 @@ export default function ProfilePage() {
 
         {/* 学习统计 */}
         <div className="card mb-6">
-          <h2 className="text-lg font-semibold mb-4">📊 学习统计</h2>
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Icon name="chart" size={20} /> 学习统计</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-blue-50 rounded-lg p-4 text-center">
               <p className="text-2xl font-bold text-blue-700">{stats?.today_count ?? '--'}</p>
@@ -119,7 +122,7 @@ export default function ProfilePage() {
           className="card flex items-center justify-between hover:shadow-md transition-shadow"
         >
           <div>
-            <span className="font-medium text-gray-700">📕 错词本</span>
+            <span className="font-medium text-gray-700 flex items-center gap-2"><Icon name="wrong" size={18} /> 错词本</span>
             <span className="text-sm text-gray-400 ml-2">
               {stats?.forgot_words ?? 0} 个待复习
             </span>
