@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, g
 from utils.decorators import login_required
 from services.word_service import WrongWordService
+from services.wrong_review_service import WrongReviewService
 
 wrong_bp = Blueprint('wrong', __name__)
 
@@ -16,8 +17,15 @@ def get_wrong_list():
 @wrong_bp.route('/review', methods=['GET'])
 @login_required
 def get_review_words():
-    """GET /api/v1/wrong/review — 获取错词复习列表"""
-    data = WrongWordService.get_review_words(g.current_user.id)
+    """
+    GET /api/v1/wrong/review?mode=normal
+    mode: normal(优先级排序) | hard(仅高优先级) | all(全部)
+    返回带 priority_score 和 priority_level 的排序列表
+    """
+    mode = request.args.get('mode', 'normal')
+    if mode not in ('normal', 'hard', 'all'):
+        mode = 'normal'
+    data = WrongReviewService.get_review_words_prioritized(g.current_user.id, mode)
     return jsonify({'code': 0, 'message': 'ok', 'data': data}), 200
 
 

@@ -21,9 +21,12 @@ interface WrongWordItem {
   } | null;
 }
 
+type ReviewMode = 'normal' | 'hard' | 'all';
+
 export default function WrongWordsPage() {
   const router = useRouter();
   const [items, setItems] = useState<WrongWordItem[]>([]);
+  const [mode, setMode] = useState<ReviewMode>('normal');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState<number | null>(null);
@@ -84,7 +87,7 @@ export default function WrongWordsPage() {
           <Icon name="wrong" size={28} /> 错词本
         </h1>
         {/* 统计卡片 */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="card text-center !p-4 bg-red-50">
             <p className="text-2xl font-bold text-red-700">{items.length}</p>
             <p className="text-xs text-red-600 mt-1">待复习</p>
@@ -93,12 +96,35 @@ export default function WrongWordsPage() {
             <p className="text-2xl font-bold text-yellow-700">{items.filter(i => i.wrong_count > 1).length}</p>
             <p className="text-xs text-yellow-600 mt-1">多次错误</p>
           </div>
-          {items.length > 0 && (
-            <div className="card text-center !p-4 flex items-center justify-center">
-              <Button icon="book" onClick={() => router.push('/wrong/review')}>开始复习</Button>
-            </div>
-          )}
         </div>
+
+        {/* 复习模式选择 */}
+        {items.length > 0 && (
+          <div className="card mb-6">
+            <p className="text-sm font-medium text-gray-700 mb-3">选择复习模式</p>
+            <div className="flex gap-2">
+              {([
+                { key: 'normal' as ReviewMode, label: '普通复习', desc: '按优先级排序' },
+                { key: 'hard' as ReviewMode, label: '困难优先', desc: '仅高优先级单词' },
+                { key: 'all' as ReviewMode, label: '全部复习', desc: '所有错词' },
+              ]).map(m => (
+                <button
+                  key={m.key}
+                  onClick={() => setMode(m.key)}
+                  className={`flex-1 rounded-lg border p-3 text-left transition-colors ${
+                    mode === m.key ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <p className={`text-sm font-medium ${mode === m.key ? 'text-blue-700' : 'text-gray-700'}`}>{m.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{m.desc}</p>
+                </button>
+              ))}
+            </div>
+            <div className="mt-4">
+              <Button icon="book" onClick={() => router.push(`/wrong/review?mode=${mode}`)}>开始复习</Button>
+            </div>
+          </div>
+        )}
         {items.length === 0 && (
           <div className="card text-center !p-4 flex items-center justify-center mb-6">
             <Button icon="book" variant="secondary" disabled>暂无单词可复习</Button>
