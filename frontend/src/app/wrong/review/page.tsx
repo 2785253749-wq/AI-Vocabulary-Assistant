@@ -35,6 +35,9 @@ function ReviewContent() {
   const [submitting, setSubmitting] = useState(false);
   const [counts, setCounts] = useState({ known: 0, fuzzy: 0, forgot: 0 });
   const [stats, setStats] = useState<{ total: number; finished: number; known: number; forgot: number; accuracy: number } | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<{ summary: string; weakness: string; suggestion: string; next_plan: string } | null>(null);
+  const [aiError, setAiError] = useState('');
 
   useEffect(() => { loadWords(); }, []);
 
@@ -74,6 +77,21 @@ function ReviewContent() {
     else setCurrentIndex(i => i + 1);
   };
 
+  const handleAIAnalysis = async () => {
+    setAiLoading(true); setAiError(''); setAiResult(null);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res: any = await apiClient.post('/ai/review-analysis', {
+        total: counts.known + counts.fuzzy + counts.forgot,
+        known: counts.known, forgot: counts.forgot, fuzzy: counts.fuzzy,
+      });
+      if (res.code === 0) setAiResult(res.data);
+      else setAiError(res.message || 'AI分析失败');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) { setAiError(err?.response?.data?.message || 'AI服务暂时不可用'); }
+    finally { setAiLoading(false); }
+  };
+
   if (loading) return <div className="min-h-screen bg-gray-50"><Navbar /><Loading fullScreen text="加载错词中..." /></div>;
 
   if (error) return (
@@ -107,10 +125,49 @@ function ReviewContent() {
               <div className="bg-yellow-50 rounded-lg p-4"><p className="text-2xl font-bold text-yellow-600">{counts.fuzzy}</p><p className="text-sm text-yellow-500">仍模糊</p></div>
               <div className="bg-red-50 rounded-lg p-4"><p className="text-2xl font-bold text-red-600">{counts.forgot}</p><p className="text-sm text-red-500">又忘了</p></div>
             </div>
-            <div className="flex gap-3 justify-center">
+            <div className="flex gap-3 justify-center mb-6">
               <Button onClick={loadWords}>再复习一次</Button>
               <Button variant="secondary" onClick={() => router.push('/wrong')}>返回错词本</Button>
             </div>
+
+            {/* AI分析区域 */}
+            {!aiResult && !aiError && (
+              <div className="border-t border-gray-200 pt-6">
+                <Button onClick={handleAIAnalysis} loading={aiLoading} icon="robot" variant="primary">
+                  AI分析本次复习
+                </Button>
+              </div>
+            )}
+
+            {aiError && (
+              <div className="border-t border-gray-200 pt-4 mt-4 p-3 bg-red-50 rounded-lg text-sm text-red-600">{aiError}</div>
+            )}
+
+            {aiResult && (
+              <div className="border-t border-gray-200 pt-4 mt-4 text-left">
+                <p className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-1">
+                  <Icon name="robot" size={16} /> AI分析结果
+                </p>
+                <div className="space-y-3 text-sm">
+                  <div className="bg-blue-50 rounded-lg p-3">
+                    <p className="font-medium text-blue-700 text-xs mb-0.5">总结</p>
+                    <p className="text-blue-800">{aiResult.summary}</p>
+                  </div>
+                  <div className="bg-yellow-50 rounded-lg p-3">
+                    <p className="font-medium text-yellow-700 text-xs mb-0.5">薄弱点</p>
+                    <p className="text-yellow-800">{aiResult.weakness}</p>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-3">
+                    <p className="font-medium text-green-700 text-xs mb-0.5">建议</p>
+                    <p className="text-green-800">{aiResult.suggestion}</p>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-3">
+                    <p className="font-medium text-purple-700 text-xs mb-0.5">下一步</p>
+                    <p className="text-purple-800">{aiResult.next_plan}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </Card>
         </main>
       </div>

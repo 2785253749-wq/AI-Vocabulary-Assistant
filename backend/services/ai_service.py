@@ -152,3 +152,39 @@ class AIService:
             return {'analysis': result.get('analysis', '')}
         except (json.JSONDecodeError, KeyError):
             raise RuntimeError('AI返回格式异常，请重试')
+
+    @staticmethod
+    def generate_review_analysis(user_id: int, review_data: dict) -> dict:
+        """
+        AI错词复习分析
+        review_data: { total, known, forgot, fuzzy, high_priority_words, most_wrong_words }
+        返回: { summary, weakness, suggestion, next_plan }
+        """
+        prompt = (
+            f'你是一名英语学习指导老师。请根据用户本次错词复习结果，给出个性化分析。\n'
+            f'复习数据：\n'
+            f'- 复习单词数：{review_data.get("total", 0)}\n'
+            f'- 掌握：{review_data.get("known", 0)} 个\n'
+            f'- 忘记：{review_data.get("forgot", 0)} 个\n'
+            f'- 模糊：{review_data.get("fuzzy", 0)} 个\n'
+            f'- 高优先级错词：{", ".join(review_data.get("high_priority_words", []))}\n'
+            f'- 错误最多的词：{", ".join(review_data.get("most_wrong_words", []))}\n'
+            f'要求：分析学习表现、指出薄弱词汇类型、分析遗忘原因、给出下一步建议。'
+            f'限制200字以内，鼓励性语气。\n'
+            f'请严格按JSON格式返回，不要包含任何其他文字：\n'
+            f'{{"summary":"一句话总结","weakness":"薄弱点分析","suggestion":"学习建议","next_plan":"下一步计划"}}'
+        )
+
+        try:
+            raw = AIService._call(prompt)
+            raw = raw.strip().removeprefix('```json').removeprefix('```').removesuffix('```').strip()
+            result = json.loads(raw)
+            AIService._save_record(user_id, 'review_summary', 'review_analysis', prompt, json.dumps(result))
+            return {
+                'summary': result.get('summary', ''),
+                'weakness': result.get('weakness', ''),
+                'suggestion': result.get('suggestion', ''),
+                'next_plan': result.get('next_plan', ''),
+            }
+        except (json.JSONDecodeError, KeyError):
+            raise RuntimeError('AI返回格式异常，请重试')

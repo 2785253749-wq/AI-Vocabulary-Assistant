@@ -99,3 +99,42 @@ def generate_analysis():
         return jsonify({'code': 2001, 'message': str(e)}), 500
     except ValueError as e:
         return jsonify({'code': 2001, 'message': str(e)}), 500
+
+
+@ai_bp.route('/review-analysis', methods=['POST'])
+@login_required
+def review_analysis():
+    """
+    AI错词复习分析
+    POST /api/v1/ai/review-analysis
+    Body: { "known": 3, "forgot": 1, "fuzzy": 2, "total": 6, ... }
+    服务端根据用户实际错词数据补充 high_priority_words 和 most_wrong_words
+    """
+    from models.wrong_word import WrongWord
+    from models.word import Word
+
+    body = request.get_json(silent=True) or {}
+    user_id = g.current_user.id
+
+    # 从数据库获取高优先级错词和错误最多的词
+    wrong_items = WrongWord.query.filter_by(user_id=user_id).order_by(WrongWord.wrong_count.desc()).all()
+
+    high_priority = [w.word.word for w in wrong_items if w.word and w.wrong_count >= 2][:5]
+    most_wrong = [w.word.word for w in wrong_items if w.word][:5]
+
+    review_data = {
+        'total': body.get('total', 0),
+        'known': body.get('known', 0),
+        'forgot': body.get('forgot', 0),
+        'fuzzy': body.get('fuzzy', 0),
+        'high_priority_words': high_priority,
+        'most_wrong_words': most_wrong,
+    }
+
+    try:
+        result = AIService.generate_review_analysis(user_id, review_data)
+        return jsonify({'code': 0, 'message': 'ok', 'data': result}), 200
+    except RuntimeError as e:
+        return jsonify({'code': 2001, 'message': str(e)}), 500
+    except ValueError as e:
+        return jsonify({'code': 2001, 'message': str(e)}), 500
