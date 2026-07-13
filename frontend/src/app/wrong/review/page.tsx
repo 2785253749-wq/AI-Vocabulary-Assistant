@@ -30,6 +30,7 @@ export default function WrongReviewPage() {
   const [finished, setFinished] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [counts, setCounts] = useState({ known: 0, fuzzy: 0, forgot: 0 });
+  const [stats, setStats] = useState<{ total: number; finished: number; known: number; forgot: number; accuracy: number } | null>(null);
 
   useEffect(() => { loadWords(); }, []);
 
@@ -58,7 +59,20 @@ export default function WrongReviewPage() {
     finally { setSubmitting(false); }
   };
 
-  const nextWord = () => currentIndex + 1 >= words.length ? setFinished(true) : setCurrentIndex(i => i + 1);
+  const fetchStats = async () => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res: any = await apiClient.get('/wrong/review/statistics');
+      if (res.code === 0) setStats(res.data);
+    } catch { /* ignore */ }
+  };
+
+  const nextWord = () => {
+    if (currentIndex + 1 >= words.length) {
+      setFinished(true);
+      fetchStats();
+    } else setCurrentIndex(i => i + 1);
+  };
 
   if (loading) return <div className="min-h-screen bg-gray-50"><Navbar /><Loading fullScreen text="加载错词中..." /></div>;
 
@@ -74,12 +88,22 @@ export default function WrongReviewPage() {
 
   if (finished) {
     const total = counts.known + counts.fuzzy + counts.forgot;
+    const accuracy = stats?.accuracy ?? (total > 0 ? Math.round((counts.known / total) * 100) : 0);
     return (
       <div className="min-h-screen bg-gray-50"><Navbar />
         <main className="page-container">
           <Card className="max-w-lg mx-auto text-center py-8">
             <Icon name="trophy" size={48} className="text-yellow-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-800 mb-2">复习完成！</h2>
+
+            {/* 正确率 */}
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-blue-50 mb-4">
+              <div>
+                <p className="text-2xl font-bold text-blue-600">{accuracy}%</p>
+                <p className="text-xs text-blue-500">正确率</p>
+              </div>
+            </div>
+
             <p className="text-gray-500 mb-6">本次复习 {total} 个单词</p>
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="bg-green-50 rounded-lg p-4">

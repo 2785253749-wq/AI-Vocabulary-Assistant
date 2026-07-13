@@ -83,12 +83,27 @@ export default function WrongWordsPage() {
         <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-2">
           <Icon name="wrong" size={28} /> 错词本
         </h1>
-        <div className="flex items-center justify-between mb-8">
-          <p className="text-gray-500">共 {items.length} 个需要复习的单词</p>
+        {/* 统计卡片 */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+          <div className="card text-center !p-4 bg-red-50">
+            <p className="text-2xl font-bold text-red-700">{items.length}</p>
+            <p className="text-xs text-red-600 mt-1">待复习</p>
+          </div>
+          <div className="card text-center !p-4 bg-yellow-50">
+            <p className="text-2xl font-bold text-yellow-700">{items.filter(i => i.wrong_count > 1).length}</p>
+            <p className="text-xs text-yellow-600 mt-1">多次错误</p>
+          </div>
           {items.length > 0 && (
-            <Button icon="book" onClick={() => router.push('/wrong/review')}>开始复习</Button>
+            <div className="card text-center !p-4 flex items-center justify-center">
+              <Button icon="book" onClick={() => router.push('/wrong/review')}>开始复习</Button>
+            </div>
           )}
         </div>
+        {items.length === 0 && (
+          <div className="card text-center !p-4 flex items-center justify-center mb-6">
+            <Button icon="book" variant="secondary" disabled>暂无单词可复习</Button>
+          </div>
+        )}
 
         {error && (
           <div className="card mb-4 text-center text-red-500">

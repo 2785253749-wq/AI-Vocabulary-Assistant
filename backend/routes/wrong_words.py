@@ -39,6 +39,33 @@ def submit_review():
     return jsonify({'code': 0, 'message': 'ok', 'data': result}), 200
 
 
+@wrong_bp.route('/review/statistics', methods=['GET'])
+@login_required
+def get_review_statistics():
+    """GET /api/v1/wrong/review/statistics — 复习统计"""
+    from models.study_record import StudyRecord
+    from datetime import date
+    today = date.today()
+    user_id = g.current_user.id
+
+    total = WrongWordService.get_review_words(user_id)['total']
+    # 今日复习的错词
+    review_today = StudyRecord.query.filter(
+        StudyRecord.user_id == user_id,
+        StudyRecord.study_time == today,
+    ).all()
+
+    known = sum(1 for r in review_today if r.status == 'known')
+    forgot = sum(1 for r in review_today if r.status == 'forgot')
+    finished = known + forgot + sum(1 for r in review_today if r.status == 'fuzzy')
+    accuracy = round((known / finished * 100)) if finished > 0 else 0
+
+    return jsonify({'code': 0, 'message': 'ok', 'data': {
+        'total': total, 'finished': finished, 'known': known,
+        'forgot': forgot, 'accuracy': accuracy,
+    }}), 200
+
+
 @wrong_bp.route('/<int:wrong_id>', methods=['DELETE'])
 @login_required
 def delete_wrong(wrong_id):
