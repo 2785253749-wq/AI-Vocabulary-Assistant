@@ -1,5 +1,5 @@
+import os
 from flask import Flask, jsonify
-from config import get_config
 from extensions import db, cors
 
 
@@ -11,11 +11,8 @@ def create_app(config_name=None):
     app = Flask(__name__)
 
     # 加载配置
-    if config_name is None:
-        from config import get_config
-        app.config.from_object(get_config())
-    else:
-        app.config.from_object(config_name)
+    from config import get_config
+    app.config.from_object(get_config())
 
     # 初始化扩展
     db.init_app(app)
@@ -33,7 +30,7 @@ def create_app(config_name=None):
             'message': 'ok',
             'data': {
                 'status': 'healthy',
-                'version': '0.1.0'
+                'version': '1.0.0'
             }
         })
 
@@ -46,12 +43,13 @@ def create_app(config_name=None):
     def internal_error(error):
         return jsonify({'code': 2000, 'message': '服务器内部错误'}), 500
 
+    # 生产环境自动创建表
+    with app.app_context():
+        db.create_all()
+
     return app
 
 
 if __name__ == '__main__':
     app = create_app()
-    with app.app_context():
-        # 确保数据库表已创建（开发阶段使用，后续迁移到Flask-Migrate）
-        db.create_all()
     app.run(debug=True, port=5000)
