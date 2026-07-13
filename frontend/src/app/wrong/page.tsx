@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Icon from '@/components/Icon';
+import Button from '@/components/Button';
+import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/axios';
 
 interface WrongWordItem {
@@ -20,6 +22,7 @@ interface WrongWordItem {
 }
 
 export default function WrongWordsPage() {
+  const router = useRouter();
   const [items, setItems] = useState<WrongWordItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -80,9 +83,12 @@ export default function WrongWordsPage() {
         <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-2">
           <Icon name="wrong" size={28} /> 错词本
         </h1>
-        <p className="text-gray-500 mb-8">
-          共 {items.length} 个需要复习的单词
-        </p>
+        <div className="flex items-center justify-between mb-8">
+          <p className="text-gray-500">共 {items.length} 个需要复习的单词</p>
+          {items.length > 0 && (
+            <Button icon="book" onClick={() => router.push('/wrong/review')}>开始复习</Button>
+          )}
+        </div>
 
         {error && (
           <div className="card mb-4 text-center text-red-500">

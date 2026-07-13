@@ -134,3 +134,75 @@ class WrongWordService:
         db.session.delete(item)
         db.session.commit()
         return True, None
+
+    @staticmethod
+    def get_review_words(user_id: int) -> dict:
+        """获取错词复习列表"""
+        items = WrongWord.query.filter_by(user_id=user_id).order_by(WrongWord.wrong_count.desc()).all()
+        words = []
+        for item in items:
+            w = item.word
+            if w:
+                words.append({
+                    'wrong_id': item.id,
+                    'word_id': w.id,
+                    'word': w.word,
+                    'phonetic': w.phonetic or '',
+                    'meaning': w.meaning,
+                    'example': w.example or '',
+                    'wrong_count': item.wrong_count,
+                })
+        return {'total': len(words), 'words': words}
+
+    @staticmethod
+    def submit_review(user_id: int, word_id: int, status: str) -> tuple[dict | None, str | None]:
+        """
+        提交错词复习结果
+        known: 删除错词 + 创建StudyRecord
+        fuzzy: 保留错词 + 创建StudyRecord
+        forgot: wrong_count+1 + 创建StudyRecord
+        """
+        from datetime import date
+
+        if status not in ('known', 'fuzzy', 'forgot'):
+            return None, '无效状态'
+
+        wrong_word = WrongWord.query.filter_by(user_id=user_id, word_id=word_id).first()
+
+        if status == 'known':
+            if wrong_word:
+                db.session.delete(wrong_word)
+        elif status == 'forgot':
+            if wrong_word:
+                wrong_word.wrong_count += 1
+            else:
+                wrong_word = WrongWord(user_id=user_id, word_id=word_id)
+                db.session.add(wrong_word)
+        # fuzzy: 保留错词不变
+
+        # 创建学习记录
+        today = date.today()
+        record = StudyRecord.query.filter_by(
+            user_id=user_id, word_id=word_id, study_time=today
+        ).first()
+
+        if record:
+            record.status = status
+        else:
+            record = StudyRecord(
+                user_id=user_id, word_id=word_id,
+                status=status, study_time=today,
+            )
+            db.session.add(record)
+
+        db.session.commit()
+
+        # 更新后统计
+        remaining = WrongWord.query.filter_by(user_id=user_id).count()
+
+        return {
+            'word_id': word_id,
+            'status': status,
+            'removed': status == 'known',
+            'remaining_wrong': remaining,
+        }, None
