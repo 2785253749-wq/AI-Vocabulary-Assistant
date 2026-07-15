@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import ClientWrapper from '@/components/ClientWrapper';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -14,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="min-h-screen bg-gray-50 antialiased">
-        {children}
+        <ClientWrapper>{children}</ClientWrapper>
       </body>
     </html>
   );

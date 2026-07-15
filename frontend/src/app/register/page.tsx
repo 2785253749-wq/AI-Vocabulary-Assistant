@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Icon from '@/components/Icon';
 import apiClient from '@/lib/axios';
+import { toast } from '@/components/Toast';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -42,8 +43,8 @@ export default function RegisterPage() {
       });
 
       if (res.code === 0) {
-        // 注册成功，跳转到登录页
-        router.push('/login?registered=true');
+        toast('注册成功！请登录');
+        router.push('/login');
       } else {
         setError(res.message || '注册失败');
       }

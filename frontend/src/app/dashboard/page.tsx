@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Icon from '@/components/Icon';
+import { SkeletonStats, SkeletonCard } from '@/components/Skeleton';
 import apiClient from '@/lib/axios';
 import { getUser } from '@/lib/auth';
 import {
@@ -54,6 +55,9 @@ export default function DashboardPage() {
           {username ? `你好，${username}！` : '欢迎回来'}
         </p>
 
+        {!stats ? (
+          <SkeletonStats count={4} />
+        ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="card text-center bg-blue-50">
             <p className="text-3xl font-bold text-blue-700">{stats?.today_count ?? '--'}</p>
@@ -72,7 +76,10 @@ export default function DashboardPage() {
             <p className="text-sm text-red-600 mt-1">错词数量</p>
           </div>
         </div>
+        )}
 
+        {stats ? (
+        <>
         <div className="card mb-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Icon name="chart" size={20} />
@@ -109,6 +116,10 @@ export default function DashboardPage() {
             <span className="font-medium text-gray-700">AI助手</span>
           </a>
         </div>
+        </>
+        ) : (
+          <SkeletonCard className="mb-6" />
+        )}
       </main>
     </div>
   );

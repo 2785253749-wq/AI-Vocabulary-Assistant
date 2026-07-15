@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Icon from '@/components/Icon';
 import apiClient from '@/lib/axios';
 import { setToken, setUser, isAuthenticated } from '@/lib/auth';
+import { toast } from '@/components/Toast';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,6 +42,7 @@ export default function LoginPage() {
       if (res.code === 0) {
         setToken(res.data.access_token);
         setUser(res.data.user);
+        toast('登录成功');
         router.replace('/dashboard');
       } else {
         setError(res.message || '登录失败');
