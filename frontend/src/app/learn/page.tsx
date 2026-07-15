@@ -24,6 +24,9 @@ export default function LearnPage() {
   const [finished, setFinished] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [counts, setCounts] = useState({ known: 0, fuzzy: 0, forgot: 0 });
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<ReviewStatus | null>(null);
+  const [revising, setRevising] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<{ type: string; title: string; content: string } | null>(null);
 
@@ -48,7 +51,7 @@ export default function LearnPage() {
 
   const loadWords = async () => {
     setLoading(true); setError(''); setFinished(false);
-    setCurrentIndex(0); setCounts({ known: 0, fuzzy: 0, forgot: 0 });
+    setCurrentIndex(0); setCounts({ known: 0, fuzzy: 0, forgot: 0 }); setShowAnswer(false);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res: any = await apiClient.get('/words/today', { params: { count: 10 } });
@@ -65,11 +68,41 @@ export default function LearnPage() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res: any = await apiClient.post('/study/record', { word_id: word.id, status });
-      if (res.code === 0) { setCounts(p => ({ ...p, [status]: p[status] + 1 })); nextWord(); }
-    } catch { nextWord(); } finally { setSubmitting(false); }
+      if (res.code === 0) {
+        setCounts(p => ({ ...p, [status]: p[status] + 1 }));
+        setSelectedStatus(status);
+        setShowAnswer(true); // 翻转卡片显示答案
+      }
+    } catch { /* ignore */ } finally { setSubmitting(false); }
   };
 
-  const nextWord = () => currentIndex + 1 >= words.length ? setFinished(true) : setCurrentIndex(i => i + 1);
+  const reviseResult = async () => {
+    if (revising || !selectedStatus || currentIndex >= words.length) return;
+    // 只能修正 known/fuzzy → forgot
+    if (selectedStatus === 'forgot') return;
+    const word = words[currentIndex]; setRevising(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res: any = await apiClient.put('/study/revise-result', {
+        word_id: word.id, old_status: selectedStatus, new_status: 'forgot',
+      });
+      if (res.code === 0) {
+        setCounts(p => ({
+          ...p,
+          [selectedStatus]: p[selectedStatus] - 1,
+          forgot: p.forgot + 1,
+        }));
+        setSelectedStatus('forgot');
+      }
+    } catch { /* ignore */ } finally { setRevising(false); }
+  };
+
+  const handleNextWord = () => {
+    setShowAnswer(false);
+    setSelectedStatus(null);
+    if (currentIndex + 1 >= words.length) setFinished(true);
+    else setCurrentIndex(i => i + 1);
+  };
 
   if (loading) return <div className="min-h-screen bg-gray-50"><Navbar /><Loading fullScreen text="加载单词中..." /></div>;
 
@@ -136,12 +169,49 @@ export default function LearnPage() {
           </div>
         </div>
 
-        <FlashCard key={currentWord.id} word={currentWord.word} phonetic={currentWord.phonetic} meaning={currentWord.meaning} example={currentWord.example} />
+        <FlashCard
+          key={currentWord.id}
+          word={currentWord.word}
+          phonetic={currentWord.phonetic}
+          meaning={currentWord.meaning}
+          example={currentWord.example}
+          flipped={showAnswer}
+        />
 
-        <div className="flex justify-center gap-4 mt-6">
-          <Button variant="danger" size="lg" onClick={() => submitReview('forgot')} disabled={submitting} icon="error">忘记</Button>
-          <Button variant="secondary" size="lg" onClick={() => submitReview('fuzzy')} disabled={submitting} icon="warning">模糊</Button>
-          <Button variant="success" size="lg" onClick={() => submitReview('known')} disabled={submitting} icon="success">认识</Button>
+        {/* 评价按钮 / 确认区域 */}
+        <div className="flex flex-col items-center gap-3 mt-6">
+          {!showAnswer ? (
+            <div className="flex justify-center gap-4">
+              <Button variant="danger" size="lg" onClick={() => submitReview('forgot')} disabled={submitting} icon="error">忘记</Button>
+              <Button variant="secondary" size="lg" onClick={() => submitReview('fuzzy')} disabled={submitting} icon="warning">模糊</Button>
+              <Button variant="success" size="lg" onClick={() => submitReview('known')} disabled={submitting} icon="success">认识</Button>
+            </div>
+          ) : (
+            <>
+              {/* 确认标签 */}
+              <div className={`text-sm font-medium px-4 py-1 rounded-full ${
+                selectedStatus === 'known'  ? 'bg-green-100 text-green-700' :
+                selectedStatus === 'fuzzy'  ? 'bg-yellow-100 text-yellow-700' :
+                'bg-red-100 text-red-700'
+              }`}>
+                {selectedStatus === 'known' && '✅ 你的选择：认识'}
+                {selectedStatus === 'fuzzy' && '⚠ 你的选择：模糊'}
+                {selectedStatus === 'forgot' && '❌ 你的选择：忘记'}
+              </div>
+
+              {/* 操作按钮 */}
+              <div className="flex justify-center gap-3">
+                {selectedStatus !== 'forgot' && (
+                  <Button variant="danger" size="sm" onClick={reviseResult} loading={revising} icon="error">
+                    记错了
+                  </Button>
+                )}
+                <Button variant="primary" size="lg" onClick={handleNextWord} icon="arrow">
+                  继续学习
+                </Button>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex justify-center gap-3 mt-4">
