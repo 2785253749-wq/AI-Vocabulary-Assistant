@@ -35,6 +35,9 @@ function ReviewContent() {
   const [submitting, setSubmitting] = useState(false);
   const [counts, setCounts] = useState({ known: 0, fuzzy: 0, forgot: 0 });
   const [stats, setStats] = useState<{ total: number; finished: number; known: number; forgot: number; accuracy: number } | null>(null);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<Status | null>(null);
+  const [revising, setRevising] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<{ summary: string; weakness: string; suggestion: string; next_plan: string } | null>(null);
   const [aiError, setAiError] = useState('');
@@ -44,6 +47,7 @@ function ReviewContent() {
   const loadWords = async () => {
     setLoading(true); setError(''); setFinished(false);
     setCurrentIndex(0); setCounts({ known: 0, fuzzy: 0, forgot: 0 });
+    setShowAnswer(false); setSelectedStatus(null);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res: any = await apiClient.get('/wrong/review', { params: { mode } });
@@ -60,8 +64,39 @@ function ReviewContent() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res: any = await apiClient.post('/wrong/review', { word_id: words[currentIndex].word_id, status });
-      if (res.code === 0) { setCounts(p => ({ ...p, [status]: p[status] + 1 })); doNext(); }
-    } catch { doNext(); } finally { setSubmitting(false); }
+      if (res.code === 0) {
+        setCounts(p => ({ ...p, [status]: p[status] + 1 }));
+        setSelectedStatus(status);
+        setShowAnswer(true);
+      }
+    } catch { /* ignore */ } finally { setSubmitting(false); }
+  };
+
+  const reviseResult = async () => {
+    if (revising || !selectedStatus || selectedStatus === 'forgot') return;
+    setRevising(true);
+    const w = words[currentIndex];
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res: any = await apiClient.put('/study/revise-result', {
+        word_id: w.word_id, old_status: selectedStatus, new_status: 'forgot',
+      });
+      if (res.code === 0) {
+        setCounts(p => ({
+          ...p,
+          [selectedStatus]: p[selectedStatus] - 1,
+          forgot: p.forgot + 1,
+        }));
+        setSelectedStatus('forgot');
+      }
+    } catch { /* ignore */ } finally { setRevising(false); }
+  };
+
+  const doNext = () => {
+    setShowAnswer(false);
+    setSelectedStatus(null);
+    if (currentIndex + 1 >= words.length) { setFinished(true); fetchStats(); }
+    else setCurrentIndex(i => i + 1);
   };
 
   const fetchStats = async () => {
@@ -70,11 +105,6 @@ function ReviewContent() {
       const res: any = await apiClient.get('/wrong/review/statistics');
       if (res.code === 0) setStats(res.data);
     } catch { /* ignore */ }
-  };
-
-  const doNext = () => {
-    if (currentIndex + 1 >= words.length) { setFinished(true); fetchStats(); }
-    else setCurrentIndex(i => i + 1);
   };
 
   const handleAIAnalysis = async () => {
@@ -203,11 +233,38 @@ function ReviewContent() {
             <span className="ml-1 text-gray-400">({cw.priority_score}分)</span>
           </p>
         </div>
-        <FlashCard word={cw.word} phonetic={cw.phonetic} meaning={cw.meaning} example={cw.example} />
-        <div className="flex justify-center gap-4 mt-6">
-          <Button variant="danger" size="lg" onClick={() => submitReview('forgot')} disabled={submitting} icon="error">又忘了</Button>
-          <Button variant="secondary" size="lg" onClick={() => submitReview('fuzzy')} disabled={submitting} icon="warning">模糊</Button>
-          <Button variant="success" size="lg" onClick={() => submitReview('known')} disabled={submitting} icon="success">掌握了</Button>
+        <FlashCard
+          word={cw.word} phonetic={cw.phonetic} meaning={cw.meaning}
+          example={cw.example} flipped={showAnswer}
+        />
+        <div className="flex flex-col items-center gap-3 mt-6">
+          {!showAnswer ? (
+            <div className="flex justify-center gap-4">
+              <Button variant="danger" size="lg" onClick={() => submitReview('forgot')} disabled={submitting} icon="error">又忘了</Button>
+              <Button variant="secondary" size="lg" onClick={() => submitReview('fuzzy')} disabled={submitting} icon="warning">模糊</Button>
+              <Button variant="success" size="lg" onClick={() => submitReview('known')} disabled={submitting} icon="success">掌握了</Button>
+            </div>
+          ) : (
+            <>
+              <div className={`text-sm font-medium px-4 py-1 rounded-full ${
+                selectedStatus === 'known'  ? 'bg-green-100 text-green-700' :
+                selectedStatus === 'fuzzy'  ? 'bg-yellow-100 text-yellow-700' :
+                'bg-red-100 text-red-700'
+              }`}>
+                {selectedStatus === 'known' && '✅ 你的选择：掌握'}
+                {selectedStatus === 'fuzzy' && '⚠ 你的选择：模糊'}
+                {selectedStatus === 'forgot' && '❌ 你的选择：又忘了'}
+              </div>
+              <div className="flex justify-center gap-3">
+                {selectedStatus !== 'forgot' && (
+                  <Button variant="danger" size="sm" onClick={reviseResult} loading={revising} icon="error">
+                    记错了
+                  </Button>
+                )}
+                <Button variant="primary" size="lg" onClick={doNext} icon="arrow">继续学习</Button>
+              </div>
+            </>
+          )}
         </div>
       </main>
     </div>
