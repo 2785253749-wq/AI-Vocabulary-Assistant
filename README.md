@@ -1,163 +1,172 @@
 # AI单词助手 | AI Vocabulary Learning Assistant
 
-基于AI的智能英语单词学习Web应用，使用DeepSeek API提供个性化单词学习体验。
+基于 DeepSeek 大语言模型的智能英语单词学习 Web 应用。
 
-## 📖 项目介绍
+## 项目介绍
 
-AI单词助手是一款面向英语学习者的智能背单词工具。结合AI生成例句、记忆方法和学习分析，帮助用户高效记忆英语单词。
+AI单词助手是一款面向英语学习者的智能背单词工具。结合 DeepSeek AI 生成例句、记忆方法和学习分析，帮助用户高效记忆英语单词。支持闪卡学习、智能错词推荐、学习结果纠错等创新功能。
 
-### 核心功能
+## 核心功能
 
-- **用户认证** — 注册/登录，JWT身份认证
-- **单词学习** — 每日推荐单词，卡片翻转学习模式（认识/模糊/忘记）
-- **AI辅助** — DeepSeek驱动的AI例句生成、记忆法生成、学习分析
-- **错词本** — 自动记录忘记单词，支持复习和移除
-- **学习统计** — 学习数量、掌握数量、错词数量、学习进度
+### 1. 用户系统
+- 注册 / 登录 / JWT 身份认证
+- 个人中心展示学习数据和进度
 
-## 🛠 技术栈
+### 2. 智能背词
+- 闪卡学习模式（CSS 3D 翻转动画）
+- 认识 / 模糊 / 忘记 三种评价
+- 评价后自动翻转查看答案
+- 二次确认（记错了可即时修正）
 
-| 层级 | 技术 | 版本 |
-|------|------|------|
-| 前端框架 | Next.js | 14 |
-| 前端语言 | TypeScript | 5 |
-| CSS框架 | Tailwind CSS | 3 |
-| HTTP客户端 | Axios | 1 |
-| 后端框架 | Flask | 3.1 |
-| ORM | SQLAlchemy | 2.0 |
-| 认证 | PyJWT | 2.9 |
-| 数据库(开发) | SQLite | — |
-| 数据库(生产) | MySQL | — |
-| AI服务 | DeepSeek API | — |
-| 前端部署 | Vercel | — |
-| 后端部署 | Render | — |
+### 3. 学习纠错机制
+- 查看答案后可修改学习结果
+- known → forgot 即时修正
+- 避免误判，保证学习数据准确
 
-## 📁 项目目录结构
+### 4. 错词系统
+- 忘记自动加入错词本
+- 智能优先级排序推荐
+- 三种复习模式：普通 / 困难词优先 / 全部
+
+### 5. AI 功能（DeepSeek）
+- AI 例句生成（英文例句 + 中文翻译）
+- AI 记忆法生成（词根分析 + 联想记忆）
+- AI 学习分析（薄弱点 + 改进建议）
+- AI 复习总结（复习结果分析 + 下一步计划）
+
+### 6. 统计系统
+- 学习数量 / 掌握数量 / 错词统计
+- 7天学习趋势柱状图
+- 学习天数 + 正确率
+
+## 项目创新点
+
+1. **AI 大模型辅助学习** — DeepSeek 为每个单词生成个性化例句和记忆法
+2. **智能错词推荐算法** — priority_score = wrong_count × 0.5 + days_since × 0.3 + difficulty × 0.2
+3. **学习数据闭环** — 学习 → 记录 → 错词 → 复习 → 统计 → 分析
+4. **学习结果纠错机制** — 评价后可修正，保证数据准确性
+
+## 技术架构
+
+| 层级 | 技术 |
+|------|------|
+| 前端 | Next.js 14 + React + TypeScript + Tailwind CSS + Recharts |
+| 后端 | Python Flask + Blueprint + SQLAlchemy |
+| 数据库 | SQLite（开发）/ PostgreSQL（生产） |
+| AI | DeepSeek API (deepseek-chat) |
+| 认证 | PyJWT 无状态 Token |
+| 部署 | 前端 Vercel / 后端 Render |
+
+## 项目目录结构
 
 ```
 AI-Vocabulary-Assistant/
-├── README.md                    # 项目说明文档
-├── .gitignore                   # Git忽略配置
-│
-├── frontend/                    # 前端项目 (Next.js 14)
-│   ├── .env.local               # 前端环境变量
-│   ├── package.json
-│   ├── next.config.js
-│   ├── tailwind.config.ts
-│   ├── tsconfig.json
-│   └── src/
-│       ├── app/                 # App Router 页面
-│       │   ├── page.tsx         # 首页(重定向)
-│       │   ├── layout.tsx       # 根布局
-│       │   ├── globals.css      # 全局样式
-│       │   ├── login/           # 登录页
-│       │   ├── register/        # 注册页
-│       │   ├── dashboard/       # 学习仪表盘
-│       │   ├── learn/           # 单词学习页
-│       │   ├── ai/              # AI助手页
-│       │   └── profile/         # 个人中心
-│       ├── lib/
-│       │   ├── axios.ts         # Axios实例 + 拦截器
-│       │   └── auth.ts          # Token管理工具
-│       └── types/
-│           └── index.ts         # TypeScript类型定义
-│
-├── backend/                     # 后端项目 (Flask)
-│   ├── .env                     # 环境变量(不提交)
-│   ├── .env.example             # 环境变量模板
-│   ├── requirements.txt         # Python依赖
-│   ├── config.py                # 配置管理
-│   ├── app.py                   # Flask应用入口
-│   ├── extensions.py            # 扩展初始化
-│   ├── routes/                  # API路由 (Blueprint)
-│   │   └── __init__.py
-│   ├── models/                  # 数据库模型
-│   │   └── __init__.py
-│   ├── services/                # 业务逻辑层
-│   │   └── __init__.py
-│   └── utils/                   # 工具模块
-│       └── __init__.py
-│
-├── database/                    # 数据库文件
-│   └── app.db                   # SQLite数据库(开发)
-│
-└── docs/                        # 项目文档
-    ├── API_DOCS.md              # API接口文档
-    └── PROMPT_LOG.md            # AI Prompt日志
+├── README.md
+├── .gitignore
+├── frontend/                     # Next.js 14 前端
+│   ├── src/app/                  # 页面路由
+│   │   ├── login/                # 登录
+│   │   ├── register/             # 注册
+│   │   ├── dashboard/            # 仪表盘
+│   │   ├── learn/                # 单词学习
+│   │   ├── ai/                   # AI助手
+│   │   ├── profile/              # 个人中心
+│   │   └── wrong/                # 错词本 + 复习
+│   └── src/components/           # 通用组件
+│       ├── Button.tsx            # 按钮
+│       ├── Card.tsx              # 卡片
+│       ├── Loading.tsx           # 加载
+│       ├── Modal.tsx             # 弹窗
+│       ├── FlashCard.tsx         # 闪卡
+│       ├── Navbar.tsx            # 导航
+│       ├── Skeleton.tsx          # 骨架屏
+│       ├── Toast.tsx             # 通知
+│       └── Icon/                 # SVG图标
+├── backend/                      # Flask 后端
+│   ├── app.py                    # 入口
+│   ├── config.py                 # 配置
+│   ├── routes/                   # API路由
+│   │   ├── auth.py               # 认证
+│   │   ├── words.py              # 单词
+│   │   ├── study.py              # 学习
+│   │   ├── wrong_words.py        # 错词
+│   │   ├── ai.py                 # AI
+│   │   └── statistics.py         # 统计
+│   ├── models/                   # 数据模型
+│   ├── services/                 # 业务逻辑
+│   └── utils/                    # 工具
+├── database/                     # SQLite数据
+└── docs/                         # 项目文档
+    ├── README.md
+    ├── FEATURE_LIST.md
+    ├── API_DOCUMENT.md
+    ├── DATABASE_DESIGN.md
+    ├── AI_PROMPT_LOG.md
+    ├── DEVELOPMENT_HISTORY.md
+    └── PROJECT_SUMMARY.md
 ```
 
-## 🚀 运行方式
+## 运行方式
 
 ### 环境要求
-
 - Node.js >= 18
 - Python >= 3.10
-- npm
 
 ### 后端启动
 
 ```bash
-# 1. 进入后端目录
 cd backend
-
-# 2. 创建虚拟环境（推荐）
-python -m venv venv
-# Windows
-venv\Scripts\activate
-# macOS/Linux
-source venv/bin/activate
-
-# 3. 安装依赖
 pip install -r requirements.txt
-
-# 4. 配置环境变量（复制 .env.example 为 .env 并修改）
-cp .env.example .env
-
-# 5. 启动Flask开发服务器
-python app.py
-# 访问 http://localhost:5000/api/health 验证
+cp .env.example .env    # 填入 DEEPSEEK_API_KEY
+python app.py           # http://localhost:5000
 ```
 
 ### 前端启动
 
 ```bash
-# 1. 进入前端目录
 cd frontend
-
-# 2. 安装依赖
 npm install
-
-# 3. 启动开发服务器
-npm run dev
-# 访问 http://localhost:3000
+npm run dev             # http://localhost:3000
 ```
 
-### 一键启动开发环境
+## 部署方式
 
-```bash
-# 终端1 — 启动后端
-cd backend && python app.py
+| 服务 | 平台 | 说明 |
+|------|------|------|
+| 前端 | Vercel | root=frontend, 自动部署 |
+| 后端 | Render | root=backend, Procfile: `web: gunicorn app:create_app()` |
 
-# 终端2 — 启动前端
-cd frontend && npm run dev
-```
+### 环境变量
 
-## 📊 开发状态
+| 变量 | 说明 |
+|------|------|
+| `FLASK_ENV` | production |
+| `JWT_SECRET_KEY` | 随机字符串 |
+| `DEEPSEEK_API_KEY` | DeepSeek API密钥 |
+| `DATABASE_URL` | Render 自动注入 PostgreSQL |
+| `NEXT_PUBLIC_API_URL` | 后端地址 |
 
-| Phase | 内容 | 状态 |
-|-------|------|------|
-| Phase 1 | 项目初始化 & 基础搭建 | ✅ 完成 |
-| Phase 2 | 用户认证模块 | 🚧 待开发 |
-| Phase 3 | 单词学习模块 | 🚧 待开发 |
-| Phase 4 | AI辅助模块 | 🚧 待开发 |
-| Phase 5 | 学习统计 & 部署 | 🚧 待开发 |
+## 开发状态
 
-## 📝 API健康检查
+| 阶段 | 内容 | 状态 |
+|------|------|------|
+| 第一阶段 | 项目初始化 & 基础架构搭建 | ✅ 完成 |
+| 第二阶段 | 用户认证系统 | ✅ 完成 |
+| 第三阶段 | 单词学习闭环 | ✅ 完成 |
+| 第四阶段 | DeepSeek AI辅助模块 | ✅ 完成 |
+| 第五阶段 | 学习统计系统 | ✅ 完成 |
+| 第六阶段 | UI图标系统升级 | ✅ 完成 |
+| 第六阶段扩展 | 错词复习 + 智能排序 + AI复习分析 | ✅ 完成 |
+| 第七阶段 | 部署与体验优化 | ✅ 完成 |
+| 第八阶段 | 项目文档整理 | ✅ 完成 |
+
+## API 健康检查
 
 ```bash
 curl http://localhost:5000/api/health
-# {"code":0,"data":{"status":"healthy","version":"0.1.0"},"message":"ok"}
+# {"code":0,"data":{"status":"healthy","version":"1.0.0"},"message":"ok"}
 ```
 
-## 📄 License
+## License
 
 MIT License — 课程设计项目
